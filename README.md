@@ -20,11 +20,11 @@ Photographers can compile up to 36 JPG images and their EXIF metadata into a cle
 ## Getting Started
 Because this is a standalone single-file application, you do not need to install any complex build tools or run a local server.
 
-1. Download or clone the `zine-generator.html` file to your computer.
+1. Download or clone the `index.html` file to your computer.
 2. Double-click the file to open it directly in any modern web browser (Chrome, Firefox, Safari, Edge).
 
 ## Usage
-1. Open `zine-generator.html` in your web browser.
+1. Open `index.html` in your web browser.
 2. Enter a **Document Title** (required) and an optional description.
 3. Select your preferred **Paper Size** (A4 Landscape or US Letter Landscape).
 4. Click **Select JPG/JPEG Images** and choose up to 36 valid `.jpg` or `.jpeg` files.
