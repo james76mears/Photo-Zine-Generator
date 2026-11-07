@@ -3,6 +3,8 @@
 A lightweight, browser-based utility built with Vanilla JavaScript, Tailwind-inspired styling, and vintage typewriter aesthetics.
 Photographers can compile up to 36 JPG images and their EXIF metadata into a clean, landscape-oriented PDF.
 
+Run the project live here https://james76mears.github.io/Photo-Zine-Generator/
+
 ## Features
 * **EXIF Data Extraction:** Automatically reads camera settings (`F-Number`, `ExposureTime`, `ISO`, and `DateTimeOriginal`) from uploaded JPEG files using `exif-js`.
 * **Client-Side Processing:** Runs entirely in the browser using `jsPDF`—no server uploads or backend required.
