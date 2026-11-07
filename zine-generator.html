@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Zine Generator v1</title>
+    <title>Photo Zine Generator</title>
     <!-- Load Courier Prime Font -->
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -81,7 +81,7 @@
 
     <div class="vintage-card">
         <h1 style="font-size: 1.75rem; font-weight: bold; margin-bottom: 0.75rem; text-align: center; letter-spacing: 0.1em; text-transform: uppercase;">
-            Photo Zine Generator v1
+            Photo Zine Generator
         </h1>
         
         <div style="border-bottom: 1px dashed #a89f8c; margin: 1rem 0; width: 100%;"></div>
@@ -137,13 +137,11 @@
 
             const files = Array.from(fileInput.files);
             
-            // Hard limit validation: max 36 images
             if (files.length === 0 || files.length > 36) {
                 alert('Please select between 1 and 36 images.');
                 return;
             }
 
-            // Strict file type validation: must be JPG or JPEG
             for (let file of files) {
                 const isJpg = file.type === 'image/jpeg' || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg');
                 if (!isJpg) {
@@ -168,7 +166,6 @@
 
                 const processedImages = [];
 
-                // --- PROCESS IMAGES & EXTRACT EXIF ---
                 for (let i = 0; i < files.length; i++) {
                     statusDiv.textContent = `Processing image ${i + 1} of ${files.length} (Reading EXIF & resizing)...`;
                     
@@ -189,16 +186,17 @@
 
                     const optimizedDataUrl = await resizeImage(file, 1200);
 
-                    // Clean string without redundant "File:" and "Date:" labels for index page
-                    const settingsPart = [exifData.fNumber, exifData.exposureTime, exifData.iso].filter(Boolean).join(' | ');
+                    // Smaller middle-dot separator with tighter spacing for the catalogue index page
+                    const settingsPart = [exifData.fNumber, exifData.exposureTime, exifData.iso].filter(Boolean).join(' · ');
                     const exifParts = [file.name, exifData.dateTime !== "Unknown Date" ? exifData.dateTime : "", settingsPart].filter(Boolean);
-                    const exifString = exifParts.join('   •   ');
+                    const exifString = exifParts.join('  ·  ');
 
-                    // Footer string keeps standard layout
+                    // Standard wider layout for image page footers
+                    const footerSettingsPart = [exifData.fNumber, exifData.exposureTime, exifData.iso].filter(Boolean).join(' | ');
                     const footerString = [
                         `File: ${file.name}`,
                         `Date: ${exifData.dateTime}`,
-                        settingsPart
+                        footerSettingsPart
                     ].filter(Boolean).join('   •   ');
 
                     processedImages.push({
@@ -246,10 +244,64 @@
 
                     pdf.addImage(imgItem.dataUrl, 'JPEG', imgX, imgY, imgW, imgH);
 
-                    // EXIF Data Footer under image
                     pdf.setFont('Courier', 'normal');
                     pdf.setFontSize(9);
                     pdf.text(imgItem.footerString, pageWidth / 2, pageHeight - 12, { align: 'center' });
+                }
+
+                // --- PENULTIMATE PAGE: CONTACT SHEET ---
+                statusDiv.textContent = 'Generating contact sheet page...';
+                pdf.addPage(paperSize, 'landscape');
+
+                pdf.setFont('Courier', 'bold');
+                pdf.setFontSize(14);
+                pdf.text("CONTACT SHEET", 15, 14);
+
+                const cols = 6;
+                const rows = 6;
+                const marginLeft = 15;
+                const marginTop = 18;
+                const marginRight = 15;
+                const marginBottom = 12;
+
+                const availableWidth = pageWidth - marginLeft - marginRight;
+                const availableHeight = pageHeight - marginTop - marginBottom;
+
+                const cellWidth = availableWidth / cols;
+                const cellHeight = availableHeight / rows;
+
+                const thumbMaxWidth = cellWidth - 3;
+                const thumbMaxHeight = cellHeight - 6;
+
+                pdf.setFont('Courier', 'normal');
+                pdf.setFontSize(6);
+
+                for (let i = 0; i < processedImages.length; i++) {
+                    const imgItem = processedImages[i];
+                    const colIdx = i % cols;
+                    const rowIdx = Math.floor(i / cols);
+
+                    const cellX = marginLeft + (colIdx * cellWidth);
+                    const cellY = marginTop + (rowIdx * cellHeight);
+
+                    const imgObj = await loadImage(imgItem.dataUrl);
+                    let imgW = imgObj.width;
+                    let imgH = imgObj.height;
+                    const ratio = Math.min(thumbMaxWidth / imgW, thumbMaxHeight / imgH);
+                    imgW *= ratio;
+                    imgH *= ratio;
+
+                    const imgX = cellX + (cellWidth - imgW) / 2;
+                    const imgY = cellY + 1;
+
+                    pdf.addImage(imgItem.dataUrl, 'JPEG', imgX, imgY, imgW, imgH);
+
+                    let displayName = imgItem.fileName;
+                    if (displayName.length > 18) {
+                        displayName = displayName.substring(0, 15) + '...';
+                    }
+
+                    pdf.text(`${i + 1}. ${displayName}`, cellX + (cellWidth / 2), cellY + cellHeight - 1.5, { align: 'center' });
                 }
 
                 // --- FINAL PAGE: CATALOGUE INDEX & EXIF DATA (2 COLUMNS) ---
